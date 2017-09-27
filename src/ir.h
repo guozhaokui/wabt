@@ -383,6 +383,9 @@ struct Func {
   Index GetLocalIndex(const Var&) const;
 
   std::string name;
+  int size=0;
+  int totalsize = 0;
+  std::vector<int> callfuncs;
   FuncDeclaration decl;
   TypeVector local_types;
   BindingHash param_bindings;

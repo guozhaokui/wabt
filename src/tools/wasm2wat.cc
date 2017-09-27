@@ -92,6 +92,35 @@ static void ParseOptions(int argc, char** argv) {
   parser.Parse(argc, argv);
 }
 
+int getFunctionTotalSize(Module& module, Func* func) {
+    if (func->totalsize <= 0) {
+        func->totalsize = func->size;
+        for (int i = 0; i < func->callfuncs.size(); i++) {
+            func->totalsize += getFunctionTotalSize(module, module.funcs[func->callfuncs[i]]);
+        }
+    }
+    return func->totalsize;
+}
+
+void printFuncs(Module& module) {
+    int sum = 0;
+    int sz = module.funcs.size();
+    for (auto& func : module.funcs) {
+        printf(R"("%s":{"self":%d,"total":%d )",func->name.c_str(), (int)func->size , getFunctionTotalSize(module, func));
+        if (func->callfuncs.size() > 0) {
+            printf(R"(,"childs":[)");
+            for (int i = 0; i < func->callfuncs.size(); i++) {
+                if (i > 0)printf(",");
+                printf(" \"%s\"", module.funcs[func->callfuncs[i]]->name.c_str());
+            }
+            printf("]");
+        }
+        printf("},\n");
+        sum += func->size;
+    }
+    printf("function size end total=%d\n",sum);
+}
+
 int ProgramMain(int argc, char** argv) {
   Result result;
 
@@ -109,6 +138,7 @@ int ProgramMain(int argc, char** argv) {
     result = ReadBinaryIr(s_infile.c_str(), DataOrNull(file_data),
                           file_data.size(), &options, &error_handler, &module);
     if (Succeeded(result)) {
+        printFuncs(module);
       if (Succeeded(result) && s_validate) {
         WastLexer* lexer = nullptr;
         result = ValidateModule(lexer, &module, &error_handler);

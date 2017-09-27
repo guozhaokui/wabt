@@ -155,6 +155,7 @@ class BinaryReaderNop : public BinaryReaderDelegate {
   Result BeginCodeSection(Offset size) override { return Result::Ok; }
   Result OnFunctionBodyCount(Index count) override { return Result::Ok; }
   Result BeginFunctionBody(Index index) override { return Result::Ok; }
+  Result OnFunctionSize(Index index) override { return Result::Ok; }
   Result OnLocalDeclCount(Index count) override { return Result::Ok; }
   Result OnLocalDecl(Index decl_index, Index count, Type type) override {
     return Result::Ok;

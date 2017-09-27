@@ -114,6 +114,7 @@ class BinaryReaderIR : public BinaryReaderNop {
 
   Result OnFunctionBodyCount(Index count) override;
   Result BeginFunctionBody(Index index) override;
+  Result OnFunctionSize(uint32_t size) override;
   Result OnLocalDecl(Index decl_index, Index count, Type type) override;
 
   Result OnAtomicLoadExpr(Opcode opcode,
@@ -513,6 +514,13 @@ Result BinaryReaderIR::BeginFunctionBody(Index index) {
   return Result::Ok;
 }
 
+Result BinaryReaderIR::OnFunctionSize(uint32_t size) {
+    if (current_func_) {
+        current_func_->size = size;
+    }
+    return Result::Ok;
+}
+
 Result BinaryReaderIR::OnLocalDecl(Index decl_index, Index count, Type type) {
   TypeVector& types = current_func_->local_types;
   types.reserve(types.size() + count);
@@ -583,6 +591,17 @@ Result BinaryReaderIR::OnBrTableExpr(Index num_targets,
 }
 
 Result BinaryReaderIR::OnCallExpr(Index func_index) {
+    if (current_func_) {
+        bool find = false;
+        for (int i = 0; i < (int)(current_func_->callfuncs.size()); i++) {
+            if (current_func_->callfuncs[i] == func_index) {
+                find = true;
+                break;
+            }
+        }
+        if(!find)
+            current_func_->callfuncs.push_back(func_index);
+    }
   assert(func_index < module_->funcs.size());
   return AppendExpr(MakeUnique<CallExpr>(Var(func_index, GetLocation())));
 }

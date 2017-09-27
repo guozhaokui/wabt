@@ -1609,6 +1609,7 @@ Result BinaryReader::ReadCodeSection(Offset section_size) {
     CALLBACK(BeginFunctionBody, func_index);
     uint32_t body_size;
     CHECK_RESULT(ReadU32Leb128(&body_size, "function body size"));
+    CALLBACK(OnFunctionSize, body_size);
     Offset body_start_offset = state_.offset;
     Offset end_offset = body_start_offset + body_size;
 

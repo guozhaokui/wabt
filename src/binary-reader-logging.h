@@ -121,6 +121,7 @@ class BinaryReaderLogging : public BinaryReaderDelegate {
   Result BeginCodeSection(Offset size) override;
   Result OnFunctionBodyCount(Index count) override;
   Result BeginFunctionBody(Index index) override;
+  Result OnFunctionSize(uint32_t size) override { return Result::Ok; }
   Result OnLocalDeclCount(Index count) override;
   Result OnLocalDecl(Index decl_index, Index count, Type type) override;
 

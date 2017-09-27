@@ -385,6 +385,7 @@ struct Func {
   std::string name;
   int size=0;
   int totalsize = 0;
+  bool visiting = false;    //遍历图的时候需要
   std::vector<int> callfuncs;
   FuncDeclaration decl;
   TypeVector local_types;

@@ -92,13 +92,26 @@ static void ParseOptions(int argc, char** argv) {
   parser.Parse(argc, argv);
 }
 
-int getFunctionTotalSize(Module& module, Func* func) {
-    if (func->totalsize <= 0) {
-        func->totalsize = func->size;
-        for (int i = 0; i < func->callfuncs.size(); i++) {
-            func->totalsize += getFunctionTotalSize(module, module.funcs[func->callfuncs[i]]);
-        }
+void visitFuncGraph(Module& module, Func* func,int& totalsz) {
+    if (func->visiting)
+        return;
+    func->visiting = true;
+    totalsz += func->size;
+    for (int i = 0; i < func->callfuncs.size(); i++) {
+        auto& c = module.funcs[func->callfuncs[i]];
+        visitFuncGraph(module, c, totalsz);
     }
+}
+
+int getFunctionTotalSize(Module& module, Func* func) {
+    //ÇåÀí
+    for (auto& f : module.funcs) {
+        f->visiting = false;
+    }
+
+    int total = 0;
+    visitFuncGraph(module, func, total);
+    func->totalsize = total;
     return func->totalsize;
 }
 

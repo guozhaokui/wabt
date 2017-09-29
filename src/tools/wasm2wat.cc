@@ -124,7 +124,12 @@ void printFuncs(Module& module) {
             printf(R"(,"childs":[)");
             for (int i = 0; i < func->callfuncs.size(); i++) {
                 if (i > 0)printf(",");
-                printf(" \"%s\"", module.funcs[func->callfuncs[i]]->name.c_str());
+                if(module.funcs[func->callfuncs[i]]->name.length()>0)
+                    printf(" \"%s\"", module.funcs[func->callfuncs[i]]->name.c_str());
+                else
+                {
+                    printf(" \"%d\"", func->callfuncs[i]);
+                }
             }
             printf("]");
         }

@@ -43,6 +43,8 @@ static bool s_generate_names;
 static bool s_read_debug_names = true;
 static std::unique_ptr<FileStream> s_log_stream;
 static bool s_validate = true;
+static bool s_statsize = false;
+static bool s_onlystatsize = false;
 
 static const char s_description[] =
 R"(  Read a file in the WebAssembly binary format, and convert it to
@@ -84,6 +86,8 @@ static void ParseOptions(int argc, char** argv) {
       []() { s_generate_names = true; });
   parser.AddOption("no-check", "Don't check for invalid modules",
                    []() { s_validate = false; });
+  parser.AddOption("stat-size", "统计函数大小", []() {s_statsize = true; });
+  parser.AddOption("onlystat-size", "只统计函数大小不输出反汇编", []() {s_onlystatsize = true; });
   parser.AddArgument("filename", OptionParser::ArgumentCount::One,
                      [](const char* argument) {
                        s_infile = argument;
@@ -156,27 +160,31 @@ int ProgramMain(int argc, char** argv) {
     result = ReadBinaryIr(s_infile.c_str(), DataOrNull(file_data),
                           file_data.size(), &options, &error_handler, &module);
     if (Succeeded(result)) {
-        printFuncs(module);
-      if (Succeeded(result) && s_validate) {
-        WastLexer* lexer = nullptr;
-        result = ValidateModule(lexer, &module, &error_handler);
-      }
+        if (s_statsize || s_onlystatsize) {
+            printFuncs(module);
+        }
+        if (!s_onlystatsize) {
+            if (Succeeded(result) && s_validate) {
+                WastLexer* lexer = nullptr;
+                result = ValidateModule(lexer, &module, &error_handler);
+            }
 
-      if (s_generate_names)
-        result = GenerateNames(&module);
+            if (s_generate_names)
+                result = GenerateNames(&module);
 
-      if (Succeeded(result)) {
-        /* TODO(binji): This shouldn't fail; if a name can't be applied
-         * (because the index is invalid, say) it should just be skipped. */
-        Result dummy_result = ApplyNames(&module);
-        WABT_USE(dummy_result);
-      }
+            if (Succeeded(result)) {
+                /* TODO(binji): This shouldn't fail; if a name can't be applied
+                 * (because the index is invalid, say) it should just be skipped. */
+                Result dummy_result = ApplyNames(&module);
+                WABT_USE(dummy_result);
+            }
 
-      if (Succeeded(result)) {
-        FileStream stream(!s_outfile.empty() ? FileStream(s_outfile.c_str())
-                                             : FileStream(stdout));
-        result = WriteWat(&stream, &module, &s_write_wat_options);
-      }
+            if (Succeeded(result)) {
+                FileStream stream(!s_outfile.empty() ? FileStream(s_outfile.c_str())
+                    : FileStream(stdout));
+                result = WriteWat(&stream, &module, &s_write_wat_options);
+            }
+        }
     }
   }
   return result != Result::Ok;
